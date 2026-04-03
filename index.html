@@ -99,6 +99,22 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text
 .export-bar button:hover{background:var(--surface2);color:var(--text)}
 .export-bar .add-btn{background:var(--accent);color:#fff;border-color:var(--accent)}
 .export-bar .add-btn:hover{background:#c0392b}
+.travel-segment{padding:4px 24px 4px 66px;display:flex;align-items:center;gap:8px;color:var(--text-muted);font-size:11px;background:var(--bg);border-bottom:1px solid rgba(51,51,51,.5);min-height:32px}
+.travel-segment .travel-line{width:2px;height:20px;background:var(--border);flex-shrink:0;margin-left:-29px;margin-right:16px}
+.travel-icon{font-size:13px;flex-shrink:0}
+.travel-detail{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.travel-dist,.travel-time,.travel-mode{display:flex;align-items:center;gap:3px}
+.travel-dist{color:var(--gold)}
+.travel-time{color:var(--sakura)}
+.travel-mode{color:#64b4ff}
+.stay-badge{display:inline-flex;align-items:center;gap:3px;background:rgba(100,200,150,.12);color:#64c896;padding:1px 6px;border-radius:3px;font-size:10px;margin-left:4px;font-weight:500}
+.day-summary{padding:12px 24px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;gap:16px;align-items:center;font-size:12px;flex-wrap:wrap}
+.day-summary-item{display:flex;align-items:center;gap:4px}
+.day-summary-item.total-dist{color:var(--gold)}
+.day-summary-item.total-time{color:var(--sakura)}
+.day-summary-item.total-walk{color:#64c896}
+.day-summary-item.total-transit{color:#64b4ff}
+.day-summary-label{color:var(--text-muted);font-size:11px}
 .toast{position:fixed;bottom:24px;right:24px;background:#27ae60;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:500;z-index:3000;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.4)}
 .toast.visible{opacity:1;transform:translateY(0)}
 .leaflet-popup-content-wrapper{background:var(--surface)!important;color:var(--text)!important;border-radius:8px!important;box-shadow:0 4px 20px rgba(0,0,0,.5)!important}
@@ -232,15 +248,96 @@ function renderDayTabs(){
     return '<div class="day-tab '+(i===activeDay?'active':'')+'" draggable="true" ondragstart="onDayDragStart(event,'+i+')" ondragover="onDayDragOver(event,'+i+')" ondragleave="onDayDragLeave(event)" ondrop="onDayDrop(event,'+i+')" onclick="selectDay('+i+')">Tag '+(i+1)+'</div>';
   }).join('');
 }
+// ROUTING & DISTANCE
+function haversine(lat1,lon1,lat2,lon2){
+  var R=6371,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180;
+  var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+function estimateTravel(distKm){
+  // Under 1.5km: walk. 1.5-5km: could walk or metro. Over 5km: metro/train. Over 30km: Shinkansen/train
+  if(distKm<0.1)return{mode:'walk',icon:'\ud83d\udeb6',modeLabel:'Laufen',timeMin:1,walkDist:distKm};
+  if(distKm<1.5)return{mode:'walk',icon:'\ud83d\udeb6',modeLabel:'Laufen',timeMin:Math.round(distKm/0.07),walkDist:distKm};
+  if(distKm<5)return{mode:'metro',icon:'\ud83d\ude87',modeLabel:'U-Bahn/Laufen',timeMin:Math.round(5+distKm/0.5),walkDist:Math.min(distKm,0.8)};
+  if(distKm<30)return{mode:'train',icon:'\ud83d\ude83',modeLabel:'Bahn',timeMin:Math.round(8+distKm/0.8),walkDist:0.5};
+  if(distKm<100)return{mode:'train',icon:'\ud83d\ude85',modeLabel:'Zug/Shinkansen',timeMin:Math.round(15+distKm/2.5),walkDist:0.3};
+  return{mode:'shinkansen',icon:'\ud83d\ude85',modeLabel:'Shinkansen',timeMin:Math.round(20+distKm/3.5),walkDist:0.3};
+}
+function parseTime(t){
+  if(!t)return null;
+  var m=t.match(/(\d{1,2}):(\d{2})/);
+  if(m)return parseInt(m[1])*60+parseInt(m[2]);
+  return null;
+}
+function formatMin(m){
+  if(m<60)return m+'min';
+  var h=Math.floor(m/60),r=m%60;
+  return r>0?h+'h '+r+'min':h+'h';
+}
+function formatDist(km){
+  if(km<1)return Math.round(km*1000)+'m';
+  return km.toFixed(1)+'km';
+}
+
 function renderStations(){
   var list=document.getElementById('stationsList'),day=state.days[activeDay];
   if(!day){list.innerHTML='';return}
   var h='<div class="day-header"><h2>'+day.title+'</h2><span class="day-date">'+day.date+' \u00b7 '+day.city+'</span></div>';
   if(day.note)h+='<div class="day-note">'+day.note+'</div>';
+
+  // Pre-calculate all travel segments
+  var segments=[],totalDist=0,totalWalk=0,totalTravelMin=0,totalStayMin=0;
+  for(var i=0;i<day.stations.length;i++){
+    var s=day.stations[i],next=day.stations[i+1];
+    // Stay duration
+    var stayMin=0;
+    if(next){
+      var t1=parseTime(s.time),t2=parseTime(next.time);
+      if(t1!==null&&t2!==null){
+        var seg=null;
+        if(s.lat&&s.lng&&next.lat&&next.lng){
+          var d=haversine(s.lat,s.lng,next.lat,next.lng);
+          seg=estimateTravel(d);
+          totalDist+=d;totalWalk+=seg.walkDist;totalTravelMin+=seg.timeMin;
+        }
+        stayMin=Math.max(0,(t2-t1)-(seg?seg.timeMin:0));
+        totalStayMin+=stayMin;
+        segments.push({dist:seg?haversine(s.lat,s.lng,next.lat,next.lng):0,travel:seg,stayMin:stayMin});
+      }else{
+        if(s.lat&&s.lng&&next.lat&&next.lng){
+          var d2=haversine(s.lat,s.lng,next.lat,next.lng);
+          var seg2=estimateTravel(d2);
+          totalDist+=d2;totalWalk+=seg2.walkDist;totalTravelMin+=seg2.timeMin;
+          segments.push({dist:d2,travel:seg2,stayMin:null});
+        }else{segments.push(null)}
+      }
+    }
+  }
+
+  // Day summary
+  if(day.stations.length>1){
+    h+='<div class="day-summary">';
+    h+='<div class="day-summary-item total-dist">\ud83d\udccd '+formatDist(totalDist)+' gesamt</div>';
+    h+='<div class="day-summary-item total-time">\u23f1 '+formatMin(totalTravelMin)+' unterwegs</div>';
+    h+='<div class="day-summary-item total-walk">\ud83d\udeb6 '+formatDist(totalWalk)+' zu Fu\u00df</div>';
+    h+='</div>';
+  }
+
   day.stations.forEach(function(s,i){
     var tl=s.type==='sight'?'Sight':s.type==='food'?'Food':s.type==='transport'?'Transfer':'Area';
     var ac=activeStation===s.id?' active-station':'';
-    h+='<div class="station-card'+ac+'" draggable="true" ondragstart="onStationDragStart(event,'+i+')" ondragover="onStationDragOver(event,'+i+')" ondragleave="onStationDragLeave(event)" ondrop="onStationDrop(event,'+i+')" onclick="focusStation(\''+s.id+'\','+s.lat+','+s.lng+')"><div class="station-number">'+(i+1)+'</div><div class="station-info"><div class="station-name">'+s.name+' <span class="type-badge '+s.type+'">'+tl+'</span></div>'+(s.time?'<div class="station-time">\u23f0 '+s.time+'</div>':'')+(s.note?'<div class="station-note">'+s.note+'</div>':'')+'</div><div class="station-actions"><button onclick="event.stopPropagation();editStation('+i+')" title="Bearbeiten">\u270e</button><button class="delete" onclick="event.stopPropagation();deleteStation('+i+')" title="L\u00f6schen">\u00d7</button></div></div>';
+    // Stay badge
+    var stayHtml='';
+    if(segments[i]&&segments[i].stayMin!==null&&segments[i].stayMin>0){
+      stayHtml=' <span class="stay-badge">\u23f3 '+formatMin(segments[i].stayMin)+' Aufenthalt</span>';
+    }
+    h+='<div class="station-card'+ac+'" draggable="true" ondragstart="onStationDragStart(event,'+i+')" ondragover="onStationDragOver(event,'+i+')" ondragleave="onStationDragLeave(event)" ondrop="onStationDrop(event,'+i+')" onclick="focusStation(\''+s.id+'\','+s.lat+','+s.lng+')"><div class="station-number">'+(i+1)+'</div><div class="station-info"><div class="station-name">'+s.name+' <span class="type-badge '+s.type+'">'+tl+'</span>'+stayHtml+'</div>'+(s.time?'<div class="station-time">\u23f0 '+s.time+'</div>':'')+(s.note?'<div class="station-note">'+s.note+'</div>':'')+'</div><div class="station-actions"><button onclick="event.stopPropagation();editStation('+i+')" title="Bearbeiten">\u270e</button><button class="delete" onclick="event.stopPropagation();deleteStation('+i+')" title="L\u00f6schen">\u00d7</button></div></div>';
+
+    // Travel segment between stations
+    if(segments[i]&&segments[i].travel){
+      var seg=segments[i];
+      h+='<div class="travel-segment"><div class="travel-line"></div><div class="travel-icon">'+seg.travel.icon+'</div><div class="travel-detail"><span class="travel-dist">'+formatDist(seg.dist)+'</span><span class="travel-time">\u2248'+formatMin(seg.travel.timeMin)+'</span><span class="travel-mode">'+seg.travel.modeLabel+'</span></div></div>';
+    }
   });
   list.innerHTML=h;
 }
