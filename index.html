@@ -2,195 +2,225 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Japan 2026 — Trip Planner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--bg:#0f0f0f;--surface:#1a1a1a;--surface2:#242424;--border:#333;--text:#e8e4df;--text-muted:#8a8580;--accent:#e74c3c;--accent-soft:rgba(231,76,60,.15);--gold:#c9a96e;--gold-soft:rgba(201,169,110,.15);--sakura:#f2a6b3;--sakura-soft:rgba(242,166,179,.12)}
-body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
-.header{padding:24px 32px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#1a1a1a 0%,#0f0f0f 100%);position:sticky;top:0;z-index:1000}
-.header-left{display:flex;align-items:center;gap:16px}
-.logo{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--text);letter-spacing:-.5px}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-text-size-adjust:100%}
+.header{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#1a1a1a,#0f0f0f);position:sticky;top:0;z-index:1000}
+.header-left{display:flex;align-items:center;gap:12px}
+.logo{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;letter-spacing:-.5px}
 .logo span{color:var(--accent)}
-.header-subtitle{color:var(--text-muted);font-size:13px;font-weight:300;letter-spacing:2px;text-transform:uppercase}
-.header-dates{display:flex;gap:8px;align-items:center;color:var(--text-muted);font-size:13px}
+.header-subtitle{color:var(--text-muted);font-size:11px;font-weight:300;letter-spacing:2px;text-transform:uppercase}
+.header-dates{display:flex;gap:6px;align-items:center;color:var(--text-muted);font-size:12px}
 .header-dates .dot{width:4px;height:4px;border-radius:50%;background:var(--accent)}
-.app-layout{display:flex;height:calc(100vh - 73px)}
+.app-layout{display:flex;height:calc(100vh - 57px)}
 .sidebar{width:420px;min-width:420px;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
-.day-tabs{display:flex;gap:0;overflow-x:auto;border-bottom:1px solid var(--border);background:var(--surface);scrollbar-width:none}
+.day-tabs{display:flex;overflow-x:auto;border-bottom:1px solid var(--border);background:var(--surface);scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .day-tabs::-webkit-scrollbar{display:none}
-.day-tab{padding:14px 16px;cursor:pointer;white-space:nowrap;font-size:12px;font-weight:500;color:var(--text-muted);border-bottom:2px solid transparent;transition:all .2s;text-transform:uppercase;letter-spacing:1px;user-select:none}
+.day-tab{padding:12px 14px;cursor:pointer;white-space:nowrap;font-size:11px;font-weight:500;color:var(--text-muted);border-bottom:2px solid transparent;transition:all .2s;text-transform:uppercase;letter-spacing:1px;user-select:none;-webkit-tap-highlight-color:transparent}
 .day-tab:hover{color:var(--text);background:var(--surface2)}
 .day-tab.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--accent-soft)}
 .day-tab.dragging{opacity:.5}
 .day-tab.drag-over{border-left:2px solid var(--accent)}
-.search-bar{padding:12px 24px;border-bottom:1px solid var(--border);background:var(--surface);position:relative}
-.search-input-wrap{display:flex;gap:8px;align-items:center}
-.search-input-wrap input{flex:1;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Noto Sans JP',sans-serif;font-size:14px;outline:none;transition:border-color .15s}
+.search-bar{padding:10px 16px;border-bottom:1px solid var(--border);background:var(--surface);position:relative}
+.search-input-wrap{display:flex;gap:6px;align-items:center}
+.search-input-wrap input{flex:1;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Noto Sans JP',sans-serif;font-size:14px;outline:none}
 .search-input-wrap input:focus{border-color:var(--accent)}
 .search-input-wrap input::placeholder{color:var(--text-muted)}
-.search-input-wrap button{padding:10px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;white-space:nowrap;transition:background .15s}
-.search-input-wrap button:hover{background:#c0392b}
-.search-results{position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-top:none;max-height:400px;overflow-y:auto;z-index:500;display:none;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.search-input-wrap button{padding:9px 14px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;white-space:nowrap}
+.search-results{position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-top:none;max-height:350px;overflow-y:auto;z-index:500;display:none;box-shadow:0 8px 24px rgba(0,0,0,.5)}
 .search-results.visible{display:block}
-.search-result-item{padding:14px 24px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;display:flex;gap:12px;align-items:center}
-.search-result-item:hover{background:var(--surface2)}
-.search-result-icon{width:36px;height:36px;border-radius:8px;background:var(--gold-soft);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.search-result-item{padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;gap:10px;align-items:center}
+.search-result-item:hover,.search-result-item:active{background:var(--surface2)}
+.search-result-icon{width:32px;height:32px;border-radius:8px;background:var(--gold-soft);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
 .search-result-icon.food-icon{background:var(--sakura-soft);color:var(--sakura)}
 .search-result-icon.area-icon{background:rgba(100,180,255,.12);color:#64b4ff}
 .search-result-info{flex:1;min-width:0}
-.search-result-name{font-weight:500;font-size:14px;margin-bottom:2px}
-.search-result-addr{color:var(--text-muted);font-size:12px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.search-result-type{color:var(--gold);font-size:11px;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
-.search-result-add{padding:6px 12px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:500;white-space:nowrap;flex-shrink:0;transition:background .15s}
-.search-result-add:hover{background:#c0392b}
-.search-loading,.search-empty{padding:20px 24px;color:var(--text-muted);font-size:13px;text-align:center}
-.stations-list{flex:1;overflow-y:auto;padding:0;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
-.day-header{padding:20px 24px 12px;display:flex;justify-content:space-between;align-items:center}
-.day-header h2{font-family:'Playfair Display',serif;font-size:20px;font-weight:700}
-.day-header .day-date{color:var(--text-muted);font-size:12px;letter-spacing:1px}
-.day-note{padding:0 24px 16px;color:var(--text-muted);font-size:13px;font-style:italic;line-height:1.5}
-.station-card{padding:16px 24px;border-bottom:1px solid var(--border);cursor:grab;transition:background .15s;display:flex;gap:14px;align-items:flex-start}
-.station-card:hover{background:var(--surface)}
-.station-card.dragging{opacity:.4;background:var(--accent-soft)}
-.station-card.drag-over-card{border-top:2px solid var(--accent)}
+.search-result-name{font-weight:500;font-size:13px;margin-bottom:1px}
+.search-result-addr{color:var(--text-muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.search-result-type{color:var(--gold);font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin-top:1px}
+.search-result-add{padding:5px 10px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:10px;font-weight:500;white-space:nowrap;flex-shrink:0}
+.search-loading,.search-empty{padding:16px;color:var(--text-muted);font-size:13px;text-align:center}
+.stations-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.day-header{padding:16px 16px 8px;display:flex;justify-content:space-between;align-items:center}
+.day-header h2{font-family:'Playfair Display',serif;font-size:18px;font-weight:700}
+.day-header .day-date{color:var(--text-muted);font-size:11px;letter-spacing:1px}
+.day-note{padding:0 16px 12px;color:var(--text-muted);font-size:12px;font-style:italic;line-height:1.4}
+.station-card{padding:12px 16px;border-bottom:1px solid var(--border);transition:background .15s;display:flex;gap:10px;align-items:flex-start}
+.station-card:active{background:var(--surface)}
 .station-card.active-station{background:var(--accent-soft);border-left:3px solid var(--accent)}
-.station-number{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:2px}
+.station-number{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:2px}
 .station-info{flex:1;min-width:0}
-.station-name{font-weight:500;font-size:14px;margin-bottom:4px;display:flex;align-items:center;gap:8px}
-.type-badge{font-size:10px;padding:2px 6px;border-radius:3px;font-weight:400;text-transform:uppercase;letter-spacing:.5px}
+.station-name{font-weight:500;font-size:13px;margin-bottom:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.type-badge{font-size:9px;padding:2px 5px;border-radius:3px;font-weight:400;text-transform:uppercase;letter-spacing:.5px}
 .type-badge.sight{background:var(--gold-soft);color:var(--gold)}
 .type-badge.food{background:var(--sakura-soft);color:var(--sakura)}
 .type-badge.area{background:rgba(100,180,255,.12);color:#64b4ff}
 .type-badge.transport{background:rgba(100,200,150,.12);color:#64c896}
-.station-time{color:var(--text-muted);font-size:12px;margin-bottom:4px}
-.station-note{color:var(--text-muted);font-size:12px;line-height:1.4}
-.station-actions{display:flex;gap:4px;flex-shrink:0;opacity:0;transition:opacity .15s}
-.station-card:hover .station-actions{opacity:1}
-.station-actions button{background:none;border:1px solid var(--border);color:var(--text-muted);width:28px;height:28px;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s}
-.station-actions button:hover{background:var(--surface2);color:var(--text);border-color:var(--text-muted)}
-.station-actions button.delete:hover{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
-.map-container{flex:1;position:relative}
-#map{width:100%;height:100%}
-.custom-marker{background:var(--accent);color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.4);border:2px solid #fff}
-.custom-marker.food-marker{background:var(--sakura)}
-.custom-marker.area-marker{background:#64b4ff}
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:2000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px;width:500px;max-width:92vw;max-height:85vh;overflow-y:auto}
-.modal h3{font-family:'Playfair Display',serif;font-size:18px;margin-bottom:20px}
-.modal label{display:block;font-size:12px;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px}
-.modal input,.modal select,.modal textarea{width:100%;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Noto Sans JP',sans-serif;font-size:14px;margin-bottom:16px;outline:none;transition:border-color .15s}
-.modal input:focus,.modal select:focus,.modal textarea:focus{border-color:var(--accent)}
-.modal textarea{resize:vertical;min-height:60px}
-.modal-buttons{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
-.modal-buttons button{padding:10px 20px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;border:1px solid var(--border);transition:all .15s}
-.btn-cancel{background:transparent;color:var(--text-muted)}
-.btn-cancel:hover{background:var(--surface2);color:var(--text)}
-.btn-save{background:var(--accent);color:#fff;border-color:var(--accent)}
-.btn-save:hover{background:#c0392b}
-.btn-delete-modal{background:transparent;color:var(--accent);border-color:var(--accent);margin-right:auto}
-.btn-delete-modal:hover{background:var(--accent-soft)}
-.export-bar{padding:12px 24px;border-top:1px solid var(--border);background:var(--surface);display:flex;gap:8px;align-items:center}
-.export-bar button{padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500;border:1px solid var(--border);background:transparent;color:var(--text-muted);transition:all .15s}
-.export-bar button:hover{background:var(--surface2);color:var(--text)}
-.export-bar .add-btn{background:var(--accent);color:#fff;border-color:var(--accent)}
-.export-bar .add-btn:hover{background:#c0392b}
-.travel-segment{padding:4px 24px 4px 66px;display:flex;align-items:center;gap:8px;color:var(--text-muted);font-size:11px;background:var(--bg);border-bottom:1px solid rgba(51,51,51,.5);min-height:32px}
-.travel-segment .travel-line{width:2px;height:20px;background:var(--border);flex-shrink:0;margin-left:-29px;margin-right:16px}
-.travel-icon{font-size:13px;flex-shrink:0}
-.travel-detail{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.travel-dist,.travel-time,.travel-mode{display:flex;align-items:center;gap:3px}
+.station-time{color:var(--text-muted);font-size:11px;margin-bottom:3px}
+.station-note{color:var(--text-muted);font-size:11px;line-height:1.3}
+.station-actions{display:flex;gap:3px;flex-shrink:0;flex-direction:column;align-items:center}
+.station-actions-row{display:flex;gap:3px}
+.sbtn{background:none;border:1px solid var(--border);color:var(--text-muted);width:26px;height:26px;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s;-webkit-tap-highlight-color:transparent;padding:0}
+.sbtn:active{background:var(--surface2);color:var(--text)}
+.sbtn.delete:active{background:var(--accent-soft);color:var(--accent)}
+.sbtn.dis{opacity:.15;pointer-events:none}
+.stay-badge{display:inline-flex;align-items:center;gap:3px;background:rgba(100,200,150,.12);color:#64c896;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:500}
+.travel-segment{padding:3px 16px 3px 52px;display:flex;align-items:center;gap:6px;color:var(--text-muted);font-size:10px;background:var(--bg);border-bottom:1px solid rgba(51,51,51,.4);min-height:26px}
+.travel-segment .travel-line{width:2px;height:16px;background:var(--border);flex-shrink:0;margin-right:8px}
+.travel-icon{font-size:12px;flex-shrink:0}
+.travel-detail{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .travel-dist{color:var(--gold)}
 .travel-time{color:var(--sakura)}
 .travel-mode{color:#64b4ff}
-.stay-badge{display:inline-flex;align-items:center;gap:3px;background:rgba(100,200,150,.12);color:#64c896;padding:1px 6px;border-radius:3px;font-size:10px;margin-left:4px;font-weight:500}
-.day-summary{padding:12px 24px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;gap:16px;align-items:center;font-size:12px;flex-wrap:wrap}
-.day-summary-item{display:flex;align-items:center;gap:4px}
+.day-summary{padding:10px 16px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:center;font-size:11px;flex-wrap:wrap}
+.day-summary-item{display:flex;align-items:center;gap:3px}
 .day-summary-item.total-dist{color:var(--gold)}
 .day-summary-item.total-time{color:var(--sakura)}
 .day-summary-item.total-walk{color:#64c896}
-.day-summary-item.total-transit{color:#64b4ff}
-.day-summary-label{color:var(--text-muted);font-size:11px}
-.toast{position:fixed;bottom:24px;right:24px;background:#27ae60;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:500;z-index:3000;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.4)}
-.toast.visible{opacity:1;transform:translateY(0)}
+.map-container{flex:1;position:relative}
+#map{width:100%;height:100%}
+.custom-marker{background:var(--accent);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.4);border:2px solid #fff}
+.custom-marker.food-marker{background:var(--sakura)}
+.custom-marker.area-marker{background:#64b4ff}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:2000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;width:460px;max-width:92vw;max-height:85vh;overflow-y:auto}
+.modal h3{font-family:'Playfair Display',serif;font-size:17px;margin-bottom:16px}
+.modal label{display:block;font-size:11px;color:var(--text-muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:1px}
+.modal input,.modal select,.modal textarea{width:100%;padding:9px 11px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Noto Sans JP',sans-serif;font-size:14px;margin-bottom:14px;outline:none}
+.modal input:focus,.modal select:focus,.modal textarea:focus{border-color:var(--accent)}
+.modal textarea{resize:vertical;min-height:50px}
+.modal-buttons{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+.modal-buttons button{padding:9px 18px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;border:1px solid var(--border)}
+.btn-cancel{background:transparent;color:var(--text-muted)}
+.btn-save{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-delete-modal{background:transparent;color:var(--accent);border-color:var(--accent);margin-right:auto}
+.export-bar{padding:10px 16px;border-top:1px solid var(--border);background:var(--surface);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.export-bar button{padding:7px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:500;border:1px solid var(--border);background:transparent;color:var(--text-muted)}
+.export-bar .add-btn{background:var(--accent);color:#fff;border-color:var(--accent)}
+.sync-status{margin-left:auto;font-size:10px;color:var(--text-muted)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(10px);background:#27ae60;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:500;z-index:3000;opacity:0;transition:all .3s;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.4);white-space:nowrap}
+.toast.visible{opacity:1;transform:translateX(-50%) translateY(0)}
 .leaflet-popup-content-wrapper{background:var(--surface)!important;color:var(--text)!important;border-radius:8px!important;box-shadow:0 4px 20px rgba(0,0,0,.5)!important}
-.leaflet-popup-content{margin:12px 16px!important;font-family:'Noto Sans JP',sans-serif!important;font-size:13px!important}
+.leaflet-popup-content{margin:10px 14px!important;font-family:'Noto Sans JP',sans-serif!important;font-size:12px!important}
 .leaflet-popup-tip{background:var(--surface)!important}
-.popup-title{font-weight:700;font-size:14px;margin-bottom:4px}
-.popup-time{color:var(--gold);font-size:12px}
-.popup-note{color:var(--text-muted);font-size:12px;margin-top:4px}
-@media(max-width:768px){.app-layout{flex-direction:column}.sidebar{width:100%;min-width:100%;height:55vh}.map-container{height:45vh}.header{padding:16px}.logo{font-size:18px}.header-dates{display:none}}
+.popup-title{font-weight:700;font-size:13px;margin-bottom:3px}
+.popup-time{color:var(--gold);font-size:11px}
+.popup-note{color:var(--text-muted);font-size:11px;margin-top:3px}
+
+/* MOBILE VIEW TOGGLE */
+.mobile-toggle{display:none;border-bottom:1px solid var(--border);background:var(--surface)}
+.mobile-toggle-inner{display:flex}
+.mobile-toggle-btn{flex:1;padding:10px;text-align:center;font-size:12px;font-weight:500;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;text-transform:uppercase;letter-spacing:1px;-webkit-tap-highlight-color:transparent}
+.mobile-toggle-btn.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--accent-soft)}
+
+@media(max-width:768px){
+  .header{padding:12px 16px}
+  .logo{font-size:18px}
+  .header-subtitle{font-size:10px;letter-spacing:1px}
+  .header-dates{display:none}
+  .app-layout{flex-direction:column;height:calc(100vh - 49px)}
+  .sidebar{width:100%;min-width:100%;height:100%;display:flex;flex-direction:column}
+  .map-container{position:absolute;inset:0;top:49px;z-index:1}
+  .mobile-toggle{display:block;position:relative;z-index:10}
+  .sidebar.map-active{height:auto;flex:0 0 auto}
+  .sidebar.map-active .stations-list,
+  .sidebar.map-active .export-bar,
+  .sidebar.map-active .search-bar{display:none}
+  .sidebar.list-active .stations-list,
+  .sidebar.list-active .export-bar,
+  .sidebar.list-active .search-bar{display:flex}
+  .sidebar.list-active+.map-container{display:none}
+  .map-container.mobile-map-visible{display:block;position:relative;flex:1;min-height:0}
+  .map-container.mobile-map-hidden{display:none}
+  .search-bar{display:block!important}
+  .stations-list{display:block!important}
+  .export-bar{display:flex!important}
+}
 </style>
 </head>
 <body>
 <div class="header">
 <div class="header-left"><div><div class="logo">Japan <span>2026</span></div><div class="header-subtitle">Trip Planner</div></div></div>
-<div class="header-dates"><span>7. April</span><div class="dot"></div><span>17. April</span><div class="dot"></div><span>Tokyo &#8594; Kyoto &#8594; Tokyo</span></div>
+<div class="header-dates"><span>7.&ndash;17. April</span><div class="dot"></div><span>Tokyo &#8594; Kyoto &#8594; Tokyo</span></div>
 </div>
 <div class="app-layout">
-<div class="sidebar">
+<div class="sidebar" id="sidebar">
 <div class="day-tabs" id="dayTabs"></div>
-<div class="search-bar">
+<div class="mobile-toggle"><div class="mobile-toggle-inner"><div class="mobile-toggle-btn active" id="togList" onclick="setMobileView('list')">&#128203; Liste</div><div class="mobile-toggle-btn" id="togMap" onclick="setMobileView('map')">&#128506; Karte</div></div></div>
+<div class="search-bar" id="searchBar">
 <div class="search-input-wrap">
-<input type="text" id="searchInput" placeholder="Ort suchen... (z.B. TeamLab Tokyo)" autocomplete="off">
+<input type="text" id="searchInput" placeholder="Ort suchen..." autocomplete="off">
 <button id="searchBtn">Suchen</button>
 </div>
 <div class="search-results" id="searchResults"></div>
 </div>
 <div class="stations-list" id="stationsList"></div>
-<div class="export-bar">
+<div class="export-bar" id="exportBar">
 <button class="add-btn" id="addStationBtn">+ Manuell</button>
 <button id="exportBtn">Export</button>
 <button id="importBtn">Import</button>
 <input type="file" id="importFile" accept=".json" style="display:none">
+<span class="sync-status" id="syncStatus"></span>
 </div>
 </div>
-<div class="map-container"><div id="map"></div></div>
+<div class="map-container" id="mapContainer"><div id="map"></div></div>
 </div>
 <div class="modal-overlay" id="modalOverlay" style="display:none"><div class="modal" id="modal"></div></div>
 <div class="toast" id="toast"></div>
 <script>
-var TRIP_DATA={days:[
-{id:'d1',title:'Ankunft',date:'Mo 7. April',city:'Tokyo',note:'Ankunft am Abend. Check-in, Konbini-Run, Jetlag managen.',stations:[{id:'s1',name:'Ankunft Flughafen',time:'~21:00',type:'transport',lat:35.7647,lng:140.3864,note:'Narita/Haneda. Suica aufladen.'}]},
-{id:'d2',title:'Asakusa \u00b7 Ueno \u00b7 Akihabara',date:'Di 8. April',city:'Tokyo',note:'\u00d6stliches Tokyo. Kirschbl\u00fcte im Ueno Park!',stations:[{id:'s2',name:'Senso-ji & Nakamise',time:'07:30',type:'sight',lat:35.7148,lng:139.7967,note:'Fr\u00fch morgens f\u00fcr leere Gassen.'},{id:'s3',name:'Tokyo Skytree',time:'10:00',type:'sight',lat:35.7101,lng:139.8107,note:'Tickets vorab. 634m.'},{id:'s4',name:'Ueno Park',time:'12:00',type:'sight',lat:35.7148,lng:139.7734,note:'Kirschbl\u00fcte Peak! Museum Di geschlossen.'},{id:'s5',name:'Akihabara',time:'14:30',type:'area',lat:35.6996,lng:139.7714,note:'Super Potato, Radio Kaikan.'},{id:'s6',name:'ICHIRAN Shinjuku',time:'19:00',type:'food',lat:35.6906,lng:139.7028,note:'Solo-Ramen-Booths. 24h.'}]},
-{id:'d3',title:'Shibuya & Harajuku',date:'Mi 9. April',city:'Tokyo',note:'Meiji-Schrein, Street Culture, Skyline.',stations:[{id:'s7',name:'Meiji-Schrein',time:'08:00',type:'sight',lat:35.6764,lng:139.6993,note:'Sonnenaufgang. Waldweg.'},{id:'s8',name:'Takeshita Street',time:'10:00',type:'area',lat:35.6710,lng:139.7052,note:'Harajuku, Cr\u00eapes, Kawaii.'},{id:'s9',name:'Omotesando',time:'11:30',type:'area',lat:35.6674,lng:139.7077,note:'Architektur-Boulevard.'},{id:'s10',name:'Tonkatsu Maisen Aoyama',time:'12:30',type:'food',lat:35.6653,lng:139.7103,note:'Bestes Tonkatsu in Tokyo.'},{id:'s11',name:'Shibuya Crossing',time:'14:30',type:'sight',lat:35.6595,lng:139.7006,note:'Ber\u00fchmteste Kreuzung der Welt.'},{id:'s12',name:'Shibuya Sky',time:'16:00',type:'sight',lat:35.6587,lng:139.7020,note:'Tickets vorab! Sunset.'},{id:'s100',name:'Freie Zeit / Abendessen',time:'18:30',type:'food',lat:35.6503,lng:139.7041,note:'Isshin Daikanyama oder Explore.'}]},
-{id:'d4',title:'Shinjuku & G\u00e4rten',date:'Do 10. April',city:'Tokyo',note:'Kirschbl\u00fcte Shinjuku Gyoen. Abends Golden Gai.',stations:[{id:'s13',name:'Shinjuku Gyoen',time:'09:00',type:'sight',lat:35.6852,lng:139.7101,note:'DER Kirschbl\u00fcten-Spot. 500\u00a5.'},{id:'s14',name:'Rikugi-en',time:'12:00',type:'sight',lat:35.7331,lng:139.7457,note:'Edozeitlicher Garten. Teehaus.'},{id:'s15',name:'Tokyo Met. Gov. Bldg.',time:'15:00',type:'sight',lat:35.6895,lng:139.6917,note:'Kostenlose Aussicht. Lightshow.'},{id:'s101',name:'Freie Zeit',time:'16:30-18:30',type:'area',lat:35.693,lng:139.700,note:'Shopping, Erholung.'},{id:'s16',name:'Golden Gai',time:'20:00',type:'food',lat:35.6941,lng:139.7048,note:'200+ Micro-Bars.'}]},
-{id:'d5',title:'Tsukiji \u00b7 Tower \u00b7 Ikebukuro',date:'Fr 11. April',city:'Tokyo',note:'Food, Klassiker, Pok\u00e9mon Center.',stations:[{id:'s17',name:'Tsukiji Outer Market',time:'08:00',type:'food',lat:35.6648,lng:139.7703,note:'Street Food Fr\u00fchst\u00fcck.'},{id:'s18',name:'Tokyo Tower',time:'10:30',type:'sight',lat:35.6586,lng:139.7454,note:'Klassiker.'},{id:'s102',name:'Koishikawa Korakuen',time:'13:00',type:'sight',lat:35.7057,lng:139.7493,note:'\u00c4ltester Garten Tokyos.'},{id:'s19',name:'Ikebukuro / Pok\u00e9mon Center',time:'15:00',type:'area',lat:35.7290,lng:139.7188,note:'Pok\u00e9mon Center Mega Tokyo!'},{id:'s20',name:'Tarekatsu',time:'19:00',type:'food',lat:35.6502,lng:139.6956,note:'Japanisches Comfort Food.'}]},
-{id:'d6',title:'Tagesausflug Kamakura',date:'Sa 12. April',city:'Kamakura',note:'K\u00fcstenstadt, 1h von Tokyo.',stations:[{id:'s21',name:'Abfahrt Tokyo',time:'08:00',type:'transport',lat:35.6812,lng:139.7671,note:'JR Yokosuka Line. ~1h.'},{id:'s22',name:'Kotoku-in (Gro\u00dfer Buddha)',time:'09:30',type:'sight',lat:35.3168,lng:139.5357,note:'13m Bronze-Buddha.'},{id:'s103',name:'Hase-dera / Enoshima',time:'12:00',type:'sight',lat:35.3080,lng:139.5336,note:'Tempel mit Meerblick.'},{id:'s104',name:'Freie Zeit Kamakura',time:'14:00-16:00',type:'area',lat:35.3190,lng:139.5467,note:'Komachi-dori, Strand.'},{id:'s23',name:'R\u00fcckkehr Tokyo',time:'17:00',type:'transport',lat:35.6812,lng:139.7671,note:'Letzte Tokyo-Nacht.'}]},
-{id:'d7',title:'Tokyo \u2192 Kyoto \u00b7 Higashiyama',date:'So 13. April',city:'Kyoto',note:'Shinkansen. Nachmittags Gion.',stations:[{id:'s24',name:'Shinkansen Tokyo \u2192 Kyoto',time:'09:00',type:'transport',lat:35.6812,lng:139.7671,note:'~2:15h. Bento-Box!'},{id:'s25',name:'Check-in Kyoto',time:'11:30',type:'transport',lat:34.9856,lng:135.7588,note:'Gep\u00e4ck abladen.'},{id:'s26',name:'Nishiki Market',time:'12:30',type:'food',lat:35.0050,lng:135.7647,note:'Kyotos K\u00fcche.'},{id:'s27',name:'Kennin-ji',time:'14:30',type:'sight',lat:35.0000,lng:135.7736,note:'\u00c4ltester Zen-Tempel. Drachendecke.'},{id:'s28',name:'Higashiyama / Gion',time:'16:30',type:'area',lat:34.9985,lng:135.7756,note:'Sannenzaka. Geisha-Spotting.'}]},
-{id:'d8',title:'Fushimi Inari \u00b7 Nara',date:'Mo 14. April',city:'Kyoto + Nara',note:'Torii-Tore fr\u00fchmorgens, Rehe in Nara.',stations:[{id:'s29',name:'Fushimi Inari-Taisha',time:'06:30',type:'sight',lat:34.9677,lng:135.7792,note:'24h offen. FR\u00dcH = leer.'},{id:'s30',name:'Tofuku-ji',time:'09:30',type:'sight',lat:34.9760,lng:135.7738,note:'15 Min von Inari.'},{id:'s31',name:'Zug nach Nara',time:'11:00',type:'transport',lat:34.9856,lng:135.7588,note:'JR Nara Line, ~45 Min.'},{id:'s32',name:'Nara Park & Rehe',time:'12:00',type:'sight',lat:34.6850,lng:135.8430,note:'Shika-Senbei (200\u00a5). Rehe verbeugen sich!'},{id:'s33',name:'Todai-ji',time:'13:30',type:'sight',lat:34.6890,lng:135.8398,note:'Gr\u00f6\u00dftes Holzgeb\u00e4ude. 15m Buddha.'},{id:'s34',name:'R\u00fcckkehr Kyoto',time:'16:30',type:'transport',lat:34.9856,lng:135.7588,note:'Abends: Ramen oder Pontocho.'}]},
-{id:'d9',title:'Arashiyama \u00b7 Kinkaku \u00b7 Ginkaku',date:'Di 15. April',city:'Kyoto',note:'West \u2192 Nord \u2192 Ost Kyoto.',stations:[{id:'s35',name:'Arashiyama Bambuswald',time:'07:30',type:'sight',lat:35.0168,lng:135.6713,note:'FR\u00dcH! Ab 9:30 voll.'},{id:'s36',name:'Kinkaku-ji',time:'10:30',type:'sight',lat:35.0394,lng:135.7292,note:'Goldener Pavillon.'},{id:'s37',name:'Ryoan-ji',time:'12:00',type:'sight',lat:35.0345,lng:135.7183,note:'Zen-Steingarten.'},{id:'s105',name:'Freie Zeit / Teezeremonie',time:'14:00-16:00',type:'area',lat:35.010,lng:135.770,note:'Teezeremonie oder Souvenirs.'},{id:'s38',name:'Ginkaku-ji',time:'16:00',type:'sight',lat:35.0270,lng:135.7982,note:'Silberner Pavillon. Philosophenweg.'},{id:'s39',name:'Nanzen-ji',time:'17:00',type:'sight',lat:35.0114,lng:135.7945,note:'Aqu\u00e4dukt, Zen-Garten.'}]},
-{id:'d10',title:'Kyoto \u2192 Tokyo \u00b7 Letzter Tag',date:'Mi 16. April',city:'Kyoto \u2192 Tokyo',note:'Optionaler Tempel, dann zur\u00fcck.',stations:[{id:'s40',name:'Daigo-ji (optional)',time:'09:00',type:'sight',lat:34.9511,lng:135.8194,note:'UNESCO-Tempel.'},{id:'s41',name:'Shinkansen Kyoto \u2192 Tokyo',time:'12:00',type:'transport',lat:34.9856,lng:135.7588,note:'Ankunft ~14:15.'},{id:'s42',name:'Nationalmuseum Tokyo',time:'15:00',type:'sight',lat:35.7188,lng:139.7765,note:'Mi offen bis 17:00.'},{id:'s43',name:'Abschiedsessen',time:'19:00',type:'food',lat:35.6648,lng:139.7703,note:'Farewell-Spot.'}]},
-{id:'d11',title:'Abreise',date:'Do 17. April',city:'Tokyo',note:'R\u00fcckflug 13:00.',stations:[{id:'s44',name:'Check-out & Flughafen',time:'09:00',type:'transport',lat:35.7647,lng:140.3864,note:'Narita ~90 Min, Haneda ~30 Min.'}]}
-]};
+var TRIP_DATA={"days":[{"id":"d1","title":"Ankunft","date":"Mo 7. April","city":"Tokyo","note":"Ankunft am Abend. Check-in, Konbini-Run, Jetlag managen.","stations":[{"id":"s1","name":"Ankunft Flughafen","time":"~21:00","type":"transport","lat":35.7647,"lng":140.3864,"note":"Narita/Haneda. Suica aufladen."},{"id":"s1775289698109","name":"Hotel remm Ginza","time":"","type":"transport","lat":35.6674717,"lng":139.7626017,"note":"Einchecken"},{"id":"s1775295258411","name":"Chao Chao","time":"","type":"food","lat":35.6728678,"lng":139.7603485,"note":"GODZILLA SQUARE HIBIYA, Chiyoda, Tokyo"}]},{"id":"d2","title":"Asakusa \u00b7 Ueno \u00b7 Akihabara","date":"Di 8. April","city":"Tokyo","note":"\u00d6stliches Tokyo. Kirschbl\u00fcte im Ueno Park!","stations":[{"id":"s2","name":"Senso-ji & Nakamise","time":"17:00","type":"sight","lat":35.7148,"lng":139.7967,"note":"Streetfood, Krimskrams"},{"id":"s3","name":"Tokyo Skytree","time":"19:00","type":"sight","lat":35.7101,"lng":139.8107,"note":"Tickets vorab. 634m."},{"id":"s4","name":"Ueno Park","time":"11:00","type":"sight","lat":35.7148,"lng":139.7734,"note":"Kirschbl\u00fcte Peak! Museum Di geschlossen."},{"id":"s5","name":"Akihabara","time":"14:30","type":"area","lat":35.6996,"lng":139.7714,"note":"Super Potato, Radio Kaikan."}]},{"id":"d3","title":"Shibuya & Harajuku","date":"Mi 9. April","city":"Tokyo","note":"Meiji-Schrein, Street Culture, Skyline.","stations":[{"id":"s7","name":"Meiji-Schrein","time":"08:00","type":"sight","lat":35.6764,"lng":139.6993,"note":"Sonnenaufgang. Waldweg."},{"id":"s8","name":"Takeshita Street","time":"10:00","type":"area","lat":35.671,"lng":139.7052,"note":"Harajuku, Cr\u00eapes, Kawaii."},{"id":"s9","name":"Omotesando","time":"11:30","type":"area","lat":35.6674,"lng":139.7077,"note":"Architektur-Boulevard."},{"id":"s10","name":"Tonkatsu Maisen Aoyama","time":"12:30","type":"food","lat":35.6653,"lng":139.7103,"note":"Bestes Tonkatsu in Tokyo."},{"id":"s11","name":"Shibuya Crossing","time":"14:30","type":"sight","lat":35.6595,"lng":139.7006,"note":"Ber\u00fchmteste Kreuzung der Welt."},{"id":"s12","name":"Shibuya Sky","time":"16:00","type":"sight","lat":35.6587,"lng":139.702,"note":"Tickets vorab! Sunset."},{"id":"s100","name":"Freie Zeit / Abendessen","time":"18:30","type":"food","lat":35.6503,"lng":139.7041,"note":"Isshin Daikanyama oder Explore."}]},{"id":"d4","title":"Shinjuku & G\u00e4rten","date":"Do 10. April","city":"Tokyo","note":"Kirschbl\u00fcte Shinjuku Gyoen. Abends Golden Gai.","stations":[{"id":"s13","name":"Shinjuku Gyoen","time":"09:00","type":"sight","lat":35.6852,"lng":139.7101,"note":"DER Kirschbl\u00fcten-Spot. 500\u00a5."},{"id":"s14","name":"Rikugi-en","time":"12:00","type":"sight","lat":35.7331,"lng":139.7457,"note":"Edozeitlicher Garten. Teehaus."},{"id":"s15","name":"Tokyo Met. Gov. Bldg.","time":"15:00","type":"sight","lat":35.6895,"lng":139.6917,"note":"Kostenlose Aussicht. Lightshow."},{"id":"s101","name":"Freie Zeit","time":"16:30-18:30","type":"area","lat":35.693,"lng":139.7,"note":"Shopping, Erholung."},{"id":"s16","name":"Golden Gai","time":"20:00","type":"food","lat":35.6941,"lng":139.7048,"note":"200+ Micro-Bars."}]},{"id":"d5","title":"Tsukiji \u00b7 Tower \u00b7 Ikebukuro","date":"Fr 11. April","city":"Tokyo","note":"Food, Klassiker, Pok\u00e9mon Center.","stations":[{"id":"s17","name":"Tsukiji Outer Market","time":"08:00","type":"food","lat":35.6648,"lng":139.7703,"note":"Street Food Fr\u00fchst\u00fcck."},{"id":"s18","name":"Tokyo Tower","time":"10:30","type":"sight","lat":35.6586,"lng":139.7454,"note":"Klassiker."},{"id":"s102","name":"Koishikawa Korakuen","time":"13:00","type":"sight","lat":35.7057,"lng":139.7493,"note":"\u00c4ltester Garten Tokyos."},{"id":"s19","name":"Ikebukuro / Pok\u00e9mon Center","time":"15:00","type":"area","lat":35.729,"lng":139.7188,"note":"Pok\u00e9mon Center Mega Tokyo!"},{"id":"s20","name":"Tarekatsu","time":"19:00","type":"food","lat":35.6502,"lng":139.6956,"note":"Japanisches Comfort Food."}]},{"id":"d6","title":"Tagesausflug Kamakura","date":"Sa 12. April","city":"Kamakura","note":"K\u00fcstenstadt, 1h von Tokyo.","stations":[{"id":"s21","name":"Abfahrt Tokyo","time":"08:00","type":"transport","lat":35.6812,"lng":139.7671,"note":"JR Yokosuka Line. ~1h."},{"id":"s22","name":"Kotoku-in (Gro\u00dfer Buddha)","time":"09:30","type":"sight","lat":35.3168,"lng":139.5357,"note":"13m Bronze-Buddha."},{"id":"s103","name":"Hase-dera / Enoshima","time":"12:00","type":"sight","lat":35.308,"lng":139.5336,"note":"Tempel mit Meerblick."},{"id":"s104","name":"Freie Zeit Kamakura","time":"14:00-16:00","type":"area","lat":35.319,"lng":139.5467,"note":"Komachi-dori, Strand."},{"id":"s23","name":"R\u00fcckkehr Tokyo","time":"17:00","type":"transport","lat":35.6812,"lng":139.7671,"note":"Letzte Tokyo-Nacht."}]},{"id":"d7","title":"Tokyo \u2192 Kyoto \u00b7 Higashiyama","date":"So 13. April","city":"Kyoto","note":"Shinkansen. Nachmittags Gion.","stations":[{"id":"s24","name":"Shinkansen Tokyo \u2192 Kyoto","time":"09:00","type":"transport","lat":35.6812,"lng":139.7671,"note":"~2:15h. Bento-Box!"},{"id":"s25","name":"Check-in Kyoto","time":"11:30","type":"transport","lat":34.9856,"lng":135.7588,"note":"Gep\u00e4ck abladen."},{"id":"s26","name":"Nishiki Market","time":"12:30","type":"food","lat":35.005,"lng":135.7647,"note":"Kyotos K\u00fcche."},{"id":"s27","name":"Kennin-ji","time":"14:30","type":"sight","lat":35,"lng":135.7736,"note":"\u00c4ltester Zen-Tempel. Drachendecke."},{"id":"s28","name":"Higashiyama / Gion","time":"16:30","type":"area","lat":34.9985,"lng":135.7756,"note":"Sannenzaka. Geisha-Spotting."}]},{"id":"d8","title":"Fushimi Inari \u00b7 Nara","date":"Mo 14. April","city":"Kyoto + Nara","note":"Torii-Tore fr\u00fchmorgens, Rehe in Nara.","stations":[{"id":"s29","name":"Fushimi Inari-Taisha","time":"06:30","type":"sight","lat":34.9677,"lng":135.7792,"note":"24h offen. FR\u00dcH = leer."},{"id":"s30","name":"Tofuku-ji","time":"09:30","type":"sight","lat":34.976,"lng":135.7738,"note":"15 Min von Inari."},{"id":"s31","name":"Zug nach Nara","time":"11:00","type":"transport","lat":34.9856,"lng":135.7588,"note":"JR Nara Line, ~45 Min."},{"id":"s32","name":"Nara Park & Rehe","time":"12:00","type":"sight","lat":34.685,"lng":135.843,"note":"Shika-Senbei (200\u00a5). Rehe verbeugen sich!"},{"id":"s33","name":"Todai-ji","time":"13:30","type":"sight","lat":34.689,"lng":135.8398,"note":"Gr\u00f6\u00dftes Holzgeb\u00e4ude. 15m Buddha."},{"id":"s34","name":"R\u00fcckkehr Kyoto","time":"16:30","type":"transport","lat":34.9856,"lng":135.7588,"note":"Abends: Ramen oder Pontocho."}]},{"id":"d9","title":"Arashiyama \u00b7 Kinkaku \u00b7 Ginkaku","date":"Di 15. April","city":"Kyoto","note":"West \u2192 Nord \u2192 Ost Kyoto.","stations":[{"id":"s35","name":"Arashiyama Bambuswald","time":"07:30","type":"sight","lat":35.0168,"lng":135.6713,"note":"FR\u00dcH! Ab 9:30 voll."},{"id":"s36","name":"Kinkaku-ji","time":"10:30","type":"sight","lat":35.0394,"lng":135.7292,"note":"Goldener Pavillon."},{"id":"s37","name":"Ryoan-ji","time":"12:00","type":"sight","lat":35.0345,"lng":135.7183,"note":"Zen-Steingarten."},{"id":"s105","name":"Freie Zeit / Teezeremonie","time":"14:00-16:00","type":"area","lat":35.01,"lng":135.77,"note":"Teezeremonie oder Souvenirs."},{"id":"s38","name":"Ginkaku-ji","time":"16:00","type":"sight","lat":35.027,"lng":135.7982,"note":"Silberner Pavillon. Philosophenweg."},{"id":"s39","name":"Nanzen-ji","time":"17:00","type":"sight","lat":35.0114,"lng":135.7945,"note":"Aqu\u00e4dukt, Zen-Garten."}]},{"id":"d10","title":"Kyoto \u2192 Tokyo \u00b7 Letzter Tag","date":"Mi 16. April","city":"Kyoto \u2192 Tokyo","note":"Optionaler Tempel, dann zur\u00fcck.","stations":[{"id":"s40","name":"Daigo-ji (optional)","time":"09:00","type":"sight","lat":34.9511,"lng":135.8194,"note":"UNESCO-Tempel."},{"id":"s41","name":"Shinkansen Kyoto \u2192 Tokyo","time":"12:00","type":"transport","lat":34.9856,"lng":135.7588,"note":"Ankunft ~14:15."},{"id":"s42","name":"Nationalmuseum Tokyo","time":"15:00","type":"sight","lat":35.7188,"lng":139.7765,"note":"Mi offen bis 17:00."},{"id":"s43","name":"Abschiedsessen","time":"19:00","type":"food","lat":35.6648,"lng":139.7703,"note":"Farewell-Spot."}]},{"id":"d11","title":"Abreise","date":"Do 17. April","city":"Tokyo","note":"R\u00fcckflug 13:00.","stations":[{"id":"s44","name":"Check-out & Flughafen","time":"09:00","type":"transport","lat":35.7647,"lng":140.3864,"note":"Narita ~90 Min, Haneda ~30 Min."}]}]};
 
-var state=JSON.parse(JSON.stringify(TRIP_DATA)),activeDay=0,activeStation=null,map,markersLayer,routeLayer,searchTimeout=null;
-try{var saved=localStorage.getItem('japan2026_v3');if(saved){var p=JSON.parse(saved);if(p.days&&p.days.length>0)state=p}}catch(e){}
-function saveState(){try{localStorage.setItem('japan2026_v3',JSON.stringify(state))}catch(e){}}
-function showToast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('visible');setTimeout(function(){t.classList.remove('visible')},2500)}
+var state=JSON.parse(JSON.stringify(TRIP_DATA)),activeDay=0,activeStation=null,map,markersLayer,routeLayer,searchTimeout=null,mobileView='list';
+try{var saved=localStorage.getItem('japan2026_v4');if(saved){var p=JSON.parse(saved);if(p.days&&p.days.length>0)state=p}}catch(e){}
+function saveState(){try{localStorage.setItem('japan2026_v4',JSON.stringify(state))}catch(e){}}
+function showToast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('visible');setTimeout(function(){t.classList.remove('visible')},2200)}
 
-// SEARCH (Photon API - komoot.io, OSM-based, free, no key)
+// MOBILE VIEW
+function setMobileView(v){
+  mobileView=v;
+  document.getElementById('togList').className='mobile-toggle-btn'+(v==='list'?' active':'');
+  document.getElementById('togMap').className='mobile-toggle-btn'+(v==='map'?' active':'');
+  var sb=document.getElementById('sidebar'),mc=document.getElementById('mapContainer');
+  var search=document.getElementById('searchBar'),list=document.getElementById('stationsList'),exp=document.getElementById('exportBar');
+  if(v==='map'){
+    search.style.display='none';list.style.display='none';exp.style.display='none';
+    mc.style.display='block';mc.style.position='relative';mc.style.flex='1';mc.style.minHeight='0';
+    sb.style.flex='0 0 auto';sb.style.height='auto';
+    setTimeout(function(){map.invalidateSize()},100);
+  }else{
+    search.style.display='block';list.style.display='block';exp.style.display='flex';
+    mc.style.display='none';
+    sb.style.flex='1';sb.style.height='100%';
+  }
+}
+
+// MOVE STATION
+function moveStation(i,dir){
+  var day=state.days[activeDay],t=i+dir;
+  if(t<0||t>=day.stations.length)return;
+  var tmp=day.stations[i];day.stations[i]=day.stations[t];day.stations[t]=tmp;
+  saveState();render();
+}
+
+// SEARCH (Photon API)
 var searchData=[];
 async function searchPlaces(q){
   var r=document.getElementById('searchResults');
-  r.innerHTML='<div class="search-loading">Suche l\u00e4uft...</div>';
+  r.innerHTML='<div class="search-loading">Suche...</div>';
   r.classList.add('visible');
   try{
-    // Bias toward Japan with location_bias
     var url='https://photon.komoot.io/api/?q='+encodeURIComponent(q)+' Japan&limit=8&lang=en&lat=35.68&lon=139.77';
-    var resp=await fetch(url);
-    var data=await resp.json();
-    var results=data.features||[];
-    // If no results, try without Japan
+    var resp=await fetch(url);var data=await resp.json();var results=data.features||[];
     if(results.length===0){
-      var url2='https://photon.komoot.io/api/?q='+encodeURIComponent(q)+'&limit=8&lang=en&lat=35.68&lon=139.77';
-      var resp2=await fetch(url2);
-      var data2=await resp2.json();
-      results=data2.features||[];
+      var resp2=await fetch('https://photon.komoot.io/api/?q='+encodeURIComponent(q)+'&limit=8&lang=en&lat=35.68&lon=139.77');
+      var data2=await resp2.json();results=data2.features||[];
     }
     searchData=results;
     if(results.length===0){r.innerHTML='<div class="search-empty">Keine Ergebnisse.</div>';return}
@@ -200,47 +230,32 @@ async function searchPlaces(q){
       var ic=pt==='food'?'food-icon':pt==='area'?'area-icon':'';
       var sym=pt==='food'?'&#127860;':pt==='sight'?'&#9961;':pt==='transport'?'&#128651;':'&#128205;';
       var tl=pt==='food'?'Essen':pt==='sight'?'Sight':pt==='transport'?'Transport':'Gegend';
-      var nm=p.name||'Unbenannt';
-      var parts=[];
-      if(p.street)parts.push(p.street);
-      if(p.district)parts.push(p.district);
-      if(p.city)parts.push(p.city);
-      if(p.state)parts.push(p.state);
-      var ad=parts.join(', ');
-      return '<div class="search-result-item" onclick="addSearchResult('+i+')"><div class="search-result-icon '+ic+'">'+sym+'</div><div class="search-result-info"><div class="search-result-name">'+nm+'</div><div class="search-result-addr">'+ad+'</div><div class="search-result-type">'+tl+'</div></div><button class="search-result-add" onclick="event.stopPropagation();addSearchResult('+i+')">+ Tag '+(activeDay+1)+'</button></div>';
+      var nm=p.name||'?';
+      var parts=[];if(p.street)parts.push(p.street);if(p.district)parts.push(p.district);if(p.city)parts.push(p.city);
+      return '<div class="search-result-item" onclick="addSearchResult('+i+')"><div class="search-result-icon '+ic+'">'+sym+'</div><div class="search-result-info"><div class="search-result-name">'+nm+'</div><div class="search-result-addr">'+parts.join(', ')+'</div><div class="search-result-type">'+tl+'</div></div><button class="search-result-add" onclick="event.stopPropagation();addSearchResult('+i+')">+ Tag '+(activeDay+1)+'</button></div>';
     }).join('');
-  }catch(e){r.innerHTML='<div class="search-empty">Fehler. Bitte erneut versuchen.</div>'}
+  }catch(e){r.innerHTML='<div class="search-empty">Fehler.</div>'}
 }
-
 function classifyPhoton(p){
   var v=(p.osm_value||'').toLowerCase(),k=(p.osm_key||'').toLowerCase();
-  // Food
   if(['restaurant','cafe','fast_food','bar','pub','bakery','ice_cream','food_court','biergarten'].indexOf(v)>=0)return 'food';
   if(k==='cuisine')return 'food';
-  // Sight
   if(['temple','shrine','museum','castle','monument','memorial','viewpoint','attraction','theme_park','zoo','garden','artwork','gallery','park','archaeological_site','ruins'].indexOf(v)>=0)return 'sight';
-  if(k==='tourism'||k==='historic')return 'sight';
-  if(v==='place_of_worship')return 'sight';
-  // Transport
-  if(['station','bus_stop','aerodrome','airport','halt','tram_stop','subway_entrance'].indexOf(v)>=0)return 'transport';
+  if(k==='tourism'||k==='historic')return 'sight';if(v==='place_of_worship')return 'sight';
+  if(['station','bus_stop','aerodrome','airport','halt','tram_stop'].indexOf(v)>=0)return 'transport';
   if(k==='railway'||k==='aeroway')return 'transport';
   return 'area';
 }
-
 function addSearchResult(i){
   var f=searchData[i];if(!f)return;
-  var p=f.properties||{},g=f.geometry||{},coords=g.coordinates||[0,0];
-  var pt=classifyPhoton(p);
-  var nm=p.name||'Unbenannt';
-  var parts=[];
-  if(p.street)parts.push(p.street);
-  if(p.district)parts.push(p.district);
-  if(p.city)parts.push(p.city);
+  var p=f.properties||{},coords=(f.geometry||{}).coordinates||[0,0];
+  var pt=classifyPhoton(p),nm=p.name||'?';
+  var parts=[];if(p.street)parts.push(p.street);if(p.district)parts.push(p.district);if(p.city)parts.push(p.city);
   state.days[activeDay].stations.push({id:'s'+Date.now(),name:nm,time:'',type:pt,lat:coords[1],lng:coords[0],note:parts.join(', ')});
   saveState();render();
   document.getElementById('searchResults').classList.remove('visible');
   document.getElementById('searchInput').value='';
-  showToast('\u2713 '+nm+' zu Tag '+(activeDay+1)+' hinzugef\u00fcgt');
+  showToast('\u2713 '+nm+' hinzugef\u00fcgt');
 }
 
 // MAP
@@ -255,12 +270,12 @@ function renderMap(){
   day.stations.forEach(function(s,i){
     if(!s.lat||!s.lng)return;
     var mc=s.type==='food'?'food-marker':s.type==='area'?'area-marker':'';
-    var icon=L.divIcon({className:'',html:'<div class="custom-marker '+mc+'">'+(i+1)+'</div>',iconSize:[28,28],iconAnchor:[14,14]});
+    var icon=L.divIcon({className:'',html:'<div class="custom-marker '+mc+'">'+(i+1)+'</div>',iconSize:[26,26],iconAnchor:[13,13]});
     L.marker([s.lat,s.lng],{icon:icon}).bindPopup('<div class="popup-title">'+s.name+'</div><div class="popup-time">'+(s.time||'')+'</div><div class="popup-note">'+(s.note||'')+'</div>').on('click',function(){activeStation=s.id;renderStations()}).addTo(markersLayer);
     coords.push([s.lat,s.lng]);
   });
   if(coords.length>1)L.polyline(coords,{color:'#e74c3c',weight:2,opacity:.5,dashArray:'8 6'}).addTo(routeLayer);
-  if(coords.length>0)map.fitBounds(coords,{padding:[60,60],maxZoom:14});
+  if(coords.length>0)map.fitBounds(coords,{padding:[50,50],maxZoom:14});
 }
 
 // RENDER
@@ -269,104 +284,73 @@ function renderDayTabs(){
     return '<div class="day-tab '+(i===activeDay?'active':'')+'" draggable="true" ondragstart="onDayDragStart(event,'+i+')" ondragover="onDayDragOver(event,'+i+')" ondragleave="onDayDragLeave(event)" ondrop="onDayDrop(event,'+i+')" onclick="selectDay('+i+')">Tag '+(i+1)+'</div>';
   }).join('');
 }
-// ROUTING & DISTANCE
-function haversine(lat1,lon1,lat2,lon2){
-  var R=6371,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180;
-  var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
-  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+
+function haversine(a,b,c,d){var R=6371,dL=(c-a)*Math.PI/180,dN=(d-b)*Math.PI/180;var x=Math.sin(dL/2)*Math.sin(dL/2)+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dN/2)*Math.sin(dN/2);return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))}
+function estimateTravel(km){
+  if(km<.1)return{icon:'\ud83d\udeb6',modeLabel:'Laufen',timeMin:1,walkDist:km};
+  if(km<1.5)return{icon:'\ud83d\udeb6',modeLabel:'Laufen',timeMin:Math.round(km/.07),walkDist:km};
+  if(km<5)return{icon:'\ud83d\ude87',modeLabel:'U-Bahn',timeMin:Math.round(5+km/.5),walkDist:Math.min(km,.8)};
+  if(km<30)return{icon:'\ud83d\ude83',modeLabel:'Bahn',timeMin:Math.round(8+km/.8),walkDist:.5};
+  if(km<100)return{icon:'\ud83d\ude85',modeLabel:'Shinkansen',timeMin:Math.round(15+km/2.5),walkDist:.3};
+  return{icon:'\ud83d\ude85',modeLabel:'Shinkansen',timeMin:Math.round(20+km/3.5),walkDist:.3};
 }
-function estimateTravel(distKm){
-  // Under 1.5km: walk. 1.5-5km: could walk or metro. Over 5km: metro/train. Over 30km: Shinkansen/train
-  if(distKm<0.1)return{mode:'walk',icon:'\ud83d\udeb6',modeLabel:'Laufen',timeMin:1,walkDist:distKm};
-  if(distKm<1.5)return{mode:'walk',icon:'\ud83d\udeb6',modeLabel:'Laufen',timeMin:Math.round(distKm/0.07),walkDist:distKm};
-  if(distKm<5)return{mode:'metro',icon:'\ud83d\ude87',modeLabel:'U-Bahn/Laufen',timeMin:Math.round(5+distKm/0.5),walkDist:Math.min(distKm,0.8)};
-  if(distKm<30)return{mode:'train',icon:'\ud83d\ude83',modeLabel:'Bahn',timeMin:Math.round(8+distKm/0.8),walkDist:0.5};
-  if(distKm<100)return{mode:'train',icon:'\ud83d\ude85',modeLabel:'Zug/Shinkansen',timeMin:Math.round(15+distKm/2.5),walkDist:0.3};
-  return{mode:'shinkansen',icon:'\ud83d\ude85',modeLabel:'Shinkansen',timeMin:Math.round(20+distKm/3.5),walkDist:0.3};
-}
-function parseTime(t){
-  if(!t)return null;
-  var m=t.match(/(\d{1,2}):(\d{2})/);
-  if(m)return parseInt(m[1])*60+parseInt(m[2]);
-  return null;
-}
-function formatMin(m){
-  if(m<60)return m+'min';
-  var h=Math.floor(m/60),r=m%60;
-  return r>0?h+'h '+r+'min':h+'h';
-}
-function formatDist(km){
-  if(km<1)return Math.round(km*1000)+'m';
-  return km.toFixed(1)+'km';
-}
+function parseTime(t){if(!t)return null;var m=t.match(/(\d{1,2}):(\d{2})/);return m?parseInt(m[1])*60+parseInt(m[2]):null}
+function formatMin(m){if(m<60)return m+'min';var h=Math.floor(m/60),r=m%60;return r>0?h+'h '+r+'m':h+'h'}
+function formatDist(km){return km<1?Math.round(km*1000)+'m':km.toFixed(1)+'km'}
 
 function renderStations(){
   var list=document.getElementById('stationsList'),day=state.days[activeDay];
   if(!day){list.innerHTML='';return}
   var h='<div class="day-header"><h2>'+day.title+'</h2><span class="day-date">'+day.date+' \u00b7 '+day.city+'</span></div>';
   if(day.note)h+='<div class="day-note">'+day.note+'</div>';
-
-  // Pre-calculate all travel segments
-  var segments=[],totalDist=0,totalWalk=0,totalTravelMin=0,totalStayMin=0;
+  var segs=[],tD=0,tW=0,tT=0;
   for(var i=0;i<day.stations.length;i++){
-    var s=day.stations[i],next=day.stations[i+1];
-    // Stay duration
-    var stayMin=0;
-    if(next){
-      var t1=parseTime(s.time),t2=parseTime(next.time);
-      if(t1!==null&&t2!==null){
-        var seg=null;
-        if(s.lat&&s.lng&&next.lat&&next.lng){
-          var d=haversine(s.lat,s.lng,next.lat,next.lng);
-          seg=estimateTravel(d);
-          totalDist+=d;totalWalk+=seg.walkDist;totalTravelMin+=seg.timeMin;
-        }
-        stayMin=Math.max(0,(t2-t1)-(seg?seg.timeMin:0));
-        totalStayMin+=stayMin;
-        segments.push({dist:seg?haversine(s.lat,s.lng,next.lat,next.lng):0,travel:seg,stayMin:stayMin});
-      }else{
-        if(s.lat&&s.lng&&next.lat&&next.lng){
-          var d2=haversine(s.lat,s.lng,next.lat,next.lng);
-          var seg2=estimateTravel(d2);
-          totalDist+=d2;totalWalk+=seg2.walkDist;totalTravelMin+=seg2.timeMin;
-          segments.push({dist:d2,travel:seg2,stayMin:null});
-        }else{segments.push(null)}
-      }
-    }
+    var s=day.stations[i],nx=day.stations[i+1];
+    if(nx&&s.lat&&s.lng&&nx.lat&&nx.lng){
+      var d=haversine(s.lat,s.lng,nx.lat,nx.lng),tr=estimateTravel(d);
+      tD+=d;tW+=tr.walkDist;tT+=tr.timeMin;
+      var t1=parseTime(s.time),t2=parseTime(nx.time),stay=null;
+      if(t1!==null&&t2!==null)stay=Math.max(0,(t2-t1)-tr.timeMin);
+      segs.push({dist:d,travel:tr,stayMin:stay});
+    }else{segs.push(null)}
   }
-
-  // Day summary
   if(day.stations.length>1){
-    h+='<div class="day-summary">';
-    h+='<div class="day-summary-item total-dist">\ud83d\udccd '+formatDist(totalDist)+' gesamt</div>';
-    h+='<div class="day-summary-item total-time">\u23f1 '+formatMin(totalTravelMin)+' unterwegs</div>';
-    h+='<div class="day-summary-item total-walk">\ud83d\udeb6 '+formatDist(totalWalk)+' zu Fu\u00df</div>';
-    h+='</div>';
+    h+='<div class="day-summary"><div class="day-summary-item total-dist">\ud83d\udccd '+formatDist(tD)+'</div><div class="day-summary-item total-time">\u23f1 '+formatMin(tT)+' unterwegs</div><div class="day-summary-item total-walk">\ud83d\udeb6 '+formatDist(tW)+' zu Fu\u00df</div></div>';
   }
-
+  var len=day.stations.length;
   day.stations.forEach(function(s,i){
     var tl=s.type==='sight'?'Sight':s.type==='food'?'Food':s.type==='transport'?'Transfer':'Area';
     var ac=activeStation===s.id?' active-station':'';
-    // Stay badge
-    var stayHtml='';
-    if(segments[i]&&segments[i].stayMin!==null&&segments[i].stayMin>0){
-      stayHtml=' <span class="stay-badge">\u23f3 '+formatMin(segments[i].stayMin)+' Aufenthalt</span>';
-    }
-    h+='<div class="station-card'+ac+'" draggable="true" ondragstart="onStationDragStart(event,'+i+')" ondragover="onStationDragOver(event,'+i+')" ondragleave="onStationDragLeave(event)" ondrop="onStationDrop(event,'+i+')" onclick="focusStation(\''+s.id+'\','+s.lat+','+s.lng+')"><div class="station-number">'+(i+1)+'</div><div class="station-info"><div class="station-name">'+s.name+' <span class="type-badge '+s.type+'">'+tl+'</span>'+stayHtml+'</div>'+(s.time?'<div class="station-time">\u23f0 '+s.time+'</div>':'')+(s.note?'<div class="station-note">'+s.note+'</div>':'')+'</div><div class="station-actions"><button onclick="event.stopPropagation();editStation('+i+')" title="Bearbeiten">\u270e</button><button class="delete" onclick="event.stopPropagation();deleteStation('+i+')" title="L\u00f6schen">\u00d7</button></div></div>';
-
-    // Travel segment between stations
-    if(segments[i]&&segments[i].travel){
-      var seg=segments[i];
-      h+='<div class="travel-segment"><div class="travel-line"></div><div class="travel-icon">'+seg.travel.icon+'</div><div class="travel-detail"><span class="travel-dist">'+formatDist(seg.dist)+'</span><span class="travel-time">\u2248'+formatMin(seg.travel.timeMin)+'</span><span class="travel-mode">'+seg.travel.modeLabel+'</span></div></div>';
+    var stH='';if(segs[i]&&segs[i].stayMin!==null&&segs[i].stayMin>0)stH=' <span class="stay-badge">\u23f3 '+formatMin(segs[i].stayMin)+'</span>';
+    h+='<div class="station-card'+ac+'" onclick="focusStation(\''+s.id+'\','+s.lat+','+s.lng+')">';
+    h+='<div class="station-number">'+(i+1)+'</div>';
+    h+='<div class="station-info"><div class="station-name">'+s.name+' <span class="type-badge '+s.type+'">'+tl+'</span>'+stH+'</div>';
+    if(s.time)h+='<div class="station-time">\u23f0 '+s.time+'</div>';
+    if(s.note)h+='<div class="station-note">'+s.note+'</div>';
+    h+='</div>';
+    h+='<div class="station-actions">';
+    h+='<div class="station-actions-row">';
+    h+='<button class="sbtn'+(i===0?' dis':'')+'" onclick="event.stopPropagation();moveStation('+i+',-1)" title="Hoch">\u25b2</button>';
+    h+='<button class="sbtn'+(i===len-1?' dis':'')+'" onclick="event.stopPropagation();moveStation('+i+',1)" title="Runter">\u25bc</button>';
+    h+='</div><div class="station-actions-row">';
+    h+='<button class="sbtn" onclick="event.stopPropagation();editStation('+i+')" title="Bearbeiten">\u270e</button>';
+    h+='<button class="sbtn delete" onclick="event.stopPropagation();deleteStation('+i+')" title="L\u00f6schen">\u00d7</button>';
+    h+='</div></div></div>';
+    if(segs[i]&&segs[i].travel){
+      var sg=segs[i];
+      h+='<div class="travel-segment"><div class="travel-line"></div><div class="travel-icon">'+sg.travel.icon+'</div><div class="travel-detail"><span class="travel-dist">'+formatDist(sg.dist)+'</span><span class="travel-time">\u2248'+formatMin(sg.travel.timeMin)+'</span><span class="travel-mode">'+sg.travel.modeLabel+'</span></div></div>';
     }
   });
   list.innerHTML=h;
 }
 function render(){renderDayTabs();renderStations();renderMap()}
-function selectDay(i){activeDay=i;activeStation=null;render()}
+function selectDay(i){activeDay=i;activeStation=null;render();if(mobileView==='map')setTimeout(function(){map.invalidateSize()},50)}
 function focusStation(id,lat,lng){
   activeStation=id;renderStations();
-  if(lat&&lng){map.setView([lat,lng],15,{animate:true});markersLayer.eachLayer(function(m){var p=m.getLatLng();if(Math.abs(p.lat-lat)<.0001&&Math.abs(p.lng-lng)<.0001)m.openPopup()})}
+  if(lat&&lng){
+    if(mobileView==='list'&&window.innerWidth<=768)setMobileView('map');
+    setTimeout(function(){map.invalidateSize();map.setView([lat,lng],15,{animate:true});markersLayer.eachLayer(function(m){var p=m.getLatLng();if(Math.abs(p.lat-lat)<.0001&&Math.abs(p.lng-lng)<.0001)m.openPopup()})},150);
+  }
 }
 
 // DAY DRAG
@@ -376,13 +360,6 @@ function onDayDragOver(e,i){e.preventDefault();document.querySelectorAll('.day-t
 function onDayDragLeave(e){e.currentTarget.classList.remove('drag-over')}
 function onDayDrop(e,t){e.preventDefault();document.querySelectorAll('.day-tab').forEach(function(el){el.classList.remove('dragging','drag-over')});if(dragDayIndex===null||dragDayIndex===t)return;var m=state.days.splice(dragDayIndex,1)[0];state.days.splice(t,0,m);activeDay=t;dragDayIndex=null;saveState();render()}
 
-// STATION DRAG
-var dragStationIndex=null;
-function onStationDragStart(e,i){dragStationIndex=i;e.dataTransfer.effectAllowed='move';e.currentTarget.classList.add('dragging')}
-function onStationDragOver(e,i){e.preventDefault();document.querySelectorAll('.station-card').forEach(function(c){c.classList.remove('drag-over-card')});e.currentTarget.classList.add('drag-over-card')}
-function onStationDragLeave(e){e.currentTarget.classList.remove('drag-over-card')}
-function onStationDrop(e,t){e.preventDefault();document.querySelectorAll('.station-card').forEach(function(c){c.classList.remove('dragging','drag-over-card')});if(dragStationIndex===null||dragStationIndex===t)return;var day=state.days[activeDay],m=day.stations.splice(dragStationIndex,1)[0];day.stations.splice(t,0,m);dragStationIndex=null;saveState();render()}
-
 // MODAL
 function showModal(h){document.getElementById('modal').innerHTML=h;document.getElementById('modalOverlay').style.display='flex'}
 function hideModal(){document.getElementById('modalOverlay').style.display='none'}
@@ -391,9 +368,9 @@ document.getElementById('modalOverlay').addEventListener('click',function(e){if(
 function editStation(index){
   var s=state.days[activeDay].stations[index];
   var opts=state.days.map(function(d,i){return '<option value="'+i+'"'+(i===activeDay?' disabled':'')+'>Tag '+(i+1)+': '+d.title+'</option>'}).join('');
-  showModal('<h3>Station bearbeiten</h3><label>Name</label><input id="editName" value="'+s.name+'"><label>Uhrzeit</label><input id="editTime" value="'+(s.time||'')+'"><label>Typ</label><select id="editType"><option value="sight"'+(s.type==='sight'?' selected':'')+'>Sehensw\u00fcrdigkeit</option><option value="food"'+(s.type==='food'?' selected':'')+'>Essen</option><option value="area"'+(s.type==='area'?' selected':'')+'>Gegend</option><option value="transport"'+(s.type==='transport'?' selected':'')+'>Transport</option></select><label>Breitengrad</label><input id="editLat" type="number" step="0.0001" value="'+(s.lat||'')+'"><label>L\u00e4ngengrad</label><input id="editLng" type="number" step="0.0001" value="'+(s.lng||'')+'"><label>Notiz</label><textarea id="editNote">'+(s.note||'')+'</textarea><label>In Tag verschieben</label><select id="editMoveDay"><option value="">\u2014 Nicht verschieben \u2014</option>'+opts+'</select><div class="modal-buttons"><button class="btn-delete-modal" onclick="deleteStation('+index+');hideModal()">L\u00f6schen</button><button class="btn-cancel" onclick="hideModal()">Abbrechen</button><button class="btn-save" onclick="saveEditStation('+index+')">Speichern</button></div>');
+  showModal('<h3>Station bearbeiten</h3><label>Name</label><input id="editName" value="'+s.name+'"><label>Uhrzeit</label><input id="editTime" value="'+(s.time||'')+'"><label>Typ</label><select id="editType"><option value="sight"'+(s.type==='sight'?' selected':'')+'>Sight</option><option value="food"'+(s.type==='food'?' selected':'')+'>Essen</option><option value="area"'+(s.type==='area'?' selected':'')+'>Gegend</option><option value="transport"'+(s.type==='transport'?' selected':'')+'>Transport</option></select><label>Lat</label><input id="editLat" type="number" step="0.0001" value="'+(s.lat||'')+'"><label>Lng</label><input id="editLng" type="number" step="0.0001" value="'+(s.lng||'')+'"><label>Notiz</label><textarea id="editNote">'+(s.note||'')+'</textarea><label>Verschieben nach</label><select id="editMoveDay"><option value="">\u2014 Nicht verschieben \u2014</option>'+opts+'</select><div class="modal-buttons"><button class="btn-delete-modal" onclick="deleteStation('+index+');hideModal()">L\u00f6schen</button><button class="btn-cancel" onclick="hideModal()">Abbrechen</button><button class="btn-save" onclick="saveEdit('+index+')">Speichern</button></div>');
 }
-function saveEditStation(i){
+function saveEdit(i){
   var s=state.days[activeDay].stations[i];
   s.name=document.getElementById('editName').value;s.time=document.getElementById('editTime').value;
   s.type=document.getElementById('editType').value;s.lat=parseFloat(document.getElementById('editLat').value)||s.lat;
@@ -402,12 +379,12 @@ function saveEditStation(i){
   if(mv!==''){state.days[activeDay].stations.splice(i,1);state.days[parseInt(mv)].stations.push(s)}
   hideModal();saveState();render();
 }
-function deleteStation(i){if(!confirm('Station l\u00f6schen?'))return;state.days[activeDay].stations.splice(i,1);saveState();render()}
+function deleteStation(i){if(!confirm('L\u00f6schen?'))return;state.days[activeDay].stations.splice(i,1);saveState();render()}
 
 document.getElementById('addStationBtn').addEventListener('click',function(){
-  showModal('<h3>Neue Station</h3><label>Name</label><input id="addName" placeholder="z.B. TeamLab Borderless"><label>Uhrzeit</label><input id="addTime" placeholder="z.B. 14:00"><label>Typ</label><select id="addType"><option value="sight">Sehensw\u00fcrdigkeit</option><option value="food">Essen</option><option value="area">Gegend</option><option value="transport">Transport</option></select><label>Breitengrad</label><input id="addLat" type="number" step="0.0001" placeholder="35.6812"><label>L\u00e4ngengrad</label><input id="addLng" type="number" step="0.0001" placeholder="139.7671"><label>Notiz</label><textarea id="addNote" placeholder="Tipps..."></textarea><div class="modal-buttons"><button class="btn-cancel" onclick="hideModal()">Abbrechen</button><button class="btn-save" onclick="addManualStation()">Hinzuf\u00fcgen</button></div>');
+  showModal('<h3>Neue Station</h3><label>Name</label><input id="addName" placeholder="z.B. TeamLab"><label>Uhrzeit</label><input id="addTime" placeholder="14:00"><label>Typ</label><select id="addType"><option value="sight">Sight</option><option value="food">Essen</option><option value="area">Gegend</option><option value="transport">Transport</option></select><label>Lat</label><input id="addLat" type="number" step="0.0001" placeholder="35.68"><label>Lng</label><input id="addLng" type="number" step="0.0001" placeholder="139.77"><label>Notiz</label><textarea id="addNote"></textarea><div class="modal-buttons"><button class="btn-cancel" onclick="hideModal()">Abbrechen</button><button class="btn-save" onclick="addManual()">Hinzuf\u00fcgen</button></div>');
 });
-function addManualStation(){
+function addManual(){
   var n=document.getElementById('addName').value.trim();if(!n)return alert('Name fehlt.');
   state.days[activeDay].stations.push({id:'s'+Date.now(),name:n,time:document.getElementById('addTime').value,type:document.getElementById('addType').value,lat:parseFloat(document.getElementById('addLat').value)||0,lng:parseFloat(document.getElementById('addLng').value)||0,note:document.getElementById('addNote').value});
   hideModal();saveState();render();showToast('\u2713 '+n+' hinzugef\u00fcgt');
@@ -422,7 +399,7 @@ document.addEventListener('click',function(e){if(!e.target.closest('.search-bar'
 // EXPORT/IMPORT
 document.getElementById('exportBtn').addEventListener('click',function(){var b=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='japan-2026-trip.json';a.click()});
 document.getElementById('importBtn').addEventListener('click',function(){document.getElementById('importFile').click()});
-document.getElementById('importFile').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){try{var d=JSON.parse(ev.target.result);if(d.days){state=d;activeDay=0;saveState();render();showToast('Trip importiert!')}}catch(err){alert('Ung\u00fcltige JSON.')}};r.readAsText(f);e.target.value=''});
+document.getElementById('importFile').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){try{var d=JSON.parse(ev.target.result);if(d.days){state=d;activeDay=0;saveState();render();showToast('Importiert!')}}catch(err){alert('Ung\u00fcltige Datei.')}};r.readAsText(f);e.target.value=''});
 
 // KEYBOARD
 document.addEventListener('keydown',function(e){if(e.key==='Escape')hideModal();if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;if(e.key==='ArrowLeft'&&activeDay>0)selectDay(activeDay-1);if(e.key==='ArrowRight'&&activeDay<state.days.length-1)selectDay(activeDay+1)});
