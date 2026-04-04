@@ -173,49 +173,70 @@ try{var saved=localStorage.getItem('japan2026_v3');if(saved){var p=JSON.parse(sa
 function saveState(){try{localStorage.setItem('japan2026_v3',JSON.stringify(state))}catch(e){}}
 function showToast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('visible');setTimeout(function(){t.classList.remove('visible')},2500)}
 
-// SEARCH
+// SEARCH (Photon API - komoot.io, OSM-based, free, no key)
 var searchData=[];
 async function searchPlaces(q){
   var r=document.getElementById('searchResults');
   r.innerHTML='<div class="search-loading">Suche l\u00e4uft...</div>';
   r.classList.add('visible');
   try{
-    var resp=await fetch('https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(q+' Japan')+'&limit=8&addressdetails=1&namedetails=1&accept-language=de',{headers:{'User-Agent':'JapanTrip/1.0'}});
+    // Bias toward Japan with location_bias
+    var url='https://photon.komoot.io/api/?q='+encodeURIComponent(q)+' Japan&limit=8&lang=en&lat=35.68&lon=139.77';
+    var resp=await fetch(url);
     var data=await resp.json();
-    if(data.length===0){
-      var resp2=await fetch('https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(q)+'&limit=8&addressdetails=1&namedetails=1&accept-language=de',{headers:{'User-Agent':'JapanTrip/1.0'}});
-      data=await resp2.json();
+    var results=data.features||[];
+    // If no results, try without Japan
+    if(results.length===0){
+      var url2='https://photon.komoot.io/api/?q='+encodeURIComponent(q)+'&limit=8&lang=en&lat=35.68&lon=139.77';
+      var resp2=await fetch(url2);
+      var data2=await resp2.json();
+      results=data2.features||[];
     }
-    searchData=data;
-    if(data.length===0){r.innerHTML='<div class="search-empty">Keine Ergebnisse.</div>';return}
-    r.innerHTML=data.map(function(item,i){
-      var pt=classifyPlace(item);
+    searchData=results;
+    if(results.length===0){r.innerHTML='<div class="search-empty">Keine Ergebnisse.</div>';return}
+    r.innerHTML=results.map(function(f,i){
+      var p=f.properties||{},g=f.geometry||{},coords=g.coordinates||[0,0];
+      var pt=classifyPhoton(p);
       var ic=pt==='food'?'food-icon':pt==='area'?'area-icon':'';
       var sym=pt==='food'?'&#127860;':pt==='sight'?'&#9961;':pt==='transport'?'&#128651;':'&#128205;';
       var tl=pt==='food'?'Essen':pt==='sight'?'Sight':pt==='transport'?'Transport':'Gegend';
-      var nm=item.namedetails&&item.namedetails.name?item.namedetails.name:item.display_name.split(',')[0].trim();
-      var ad=item.display_name.split(',').slice(1,4).join(',').trim();
+      var nm=p.name||'Unbenannt';
+      var parts=[];
+      if(p.street)parts.push(p.street);
+      if(p.district)parts.push(p.district);
+      if(p.city)parts.push(p.city);
+      if(p.state)parts.push(p.state);
+      var ad=parts.join(', ');
       return '<div class="search-result-item" onclick="addSearchResult('+i+')"><div class="search-result-icon '+ic+'">'+sym+'</div><div class="search-result-info"><div class="search-result-name">'+nm+'</div><div class="search-result-addr">'+ad+'</div><div class="search-result-type">'+tl+'</div></div><button class="search-result-add" onclick="event.stopPropagation();addSearchResult('+i+')">+ Tag '+(activeDay+1)+'</button></div>';
     }).join('');
   }catch(e){r.innerHTML='<div class="search-empty">Fehler. Bitte erneut versuchen.</div>'}
 }
 
-function classifyPlace(item){
-  var t=(item.type||'').toLowerCase(),c=(item.class||'').toLowerCase();
-  if(['restaurant','cafe','fast_food','bar','pub','bakery','ice_cream'].indexOf(t)>=0)return 'food';
-  if(c==='amenity'&&['restaurant','cafe','bar','pub','fast_food'].indexOf(t)>=0)return 'food';
-  if(['temple','shrine','museum','castle','monument','memorial','viewpoint','attraction','theme_park','zoo','garden'].indexOf(t)>=0)return 'sight';
-  if(c==='tourism'||c==='historic')return 'sight';
-  if(['station','bus_stop','aerodrome','airport'].indexOf(t)>=0)return 'transport';
-  if(c==='railway'||c==='aeroway')return 'transport';
+function classifyPhoton(p){
+  var v=(p.osm_value||'').toLowerCase(),k=(p.osm_key||'').toLowerCase();
+  // Food
+  if(['restaurant','cafe','fast_food','bar','pub','bakery','ice_cream','food_court','biergarten'].indexOf(v)>=0)return 'food';
+  if(k==='cuisine')return 'food';
+  // Sight
+  if(['temple','shrine','museum','castle','monument','memorial','viewpoint','attraction','theme_park','zoo','garden','artwork','gallery','park','archaeological_site','ruins'].indexOf(v)>=0)return 'sight';
+  if(k==='tourism'||k==='historic')return 'sight';
+  if(v==='place_of_worship')return 'sight';
+  // Transport
+  if(['station','bus_stop','aerodrome','airport','halt','tram_stop','subway_entrance'].indexOf(v)>=0)return 'transport';
+  if(k==='railway'||k==='aeroway')return 'transport';
   return 'area';
 }
 
 function addSearchResult(i){
-  var item=searchData[i];if(!item)return;
-  var pt=classifyPlace(item);
-  var nm=item.namedetails&&item.namedetails.name?item.namedetails.name:item.display_name.split(',')[0].trim();
-  state.days[activeDay].stations.push({id:'s'+Date.now(),name:nm,time:'',type:pt,lat:parseFloat(item.lat),lng:parseFloat(item.lon),note:item.display_name.split(',').slice(1,3).join(',').trim()});
+  var f=searchData[i];if(!f)return;
+  var p=f.properties||{},g=f.geometry||{},coords=g.coordinates||[0,0];
+  var pt=classifyPhoton(p);
+  var nm=p.name||'Unbenannt';
+  var parts=[];
+  if(p.street)parts.push(p.street);
+  if(p.district)parts.push(p.district);
+  if(p.city)parts.push(p.city);
+  state.days[activeDay].stations.push({id:'s'+Date.now(),name:nm,time:'',type:pt,lat:coords[1],lng:coords[0],note:parts.join(', ')});
   saveState();render();
   document.getElementById('searchResults').classList.remove('visible');
   document.getElementById('searchInput').value='';
