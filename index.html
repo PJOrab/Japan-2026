@@ -164,6 +164,8 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text
 <div class="stations-list" id="stationsList"></div>
 <div class="export-bar" id="exportBar">
 <button class="add-btn" id="addStationBtn">+ Manuell</button>
+<button id="syncPushBtn" style="background:var(--gold);color:#000;border-color:var(--gold)">&#8593; Sync</button>
+<button id="syncPullBtn">&#8595; Laden</button>
 <button id="exportBtn">Export</button>
 <button id="importBtn">Import</button>
 <input type="file" id="importFile" accept=".json" style="display:none">
@@ -401,11 +403,76 @@ document.getElementById('exportBtn').addEventListener('click',function(){var b=n
 document.getElementById('importBtn').addEventListener('click',function(){document.getElementById('importFile').click()});
 document.getElementById('importFile').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){try{var d=JSON.parse(ev.target.result);if(d.days){state=d;activeDay=0;saveState();render();showToast('Importiert!')}}catch(err){alert('Ung\u00fcltige Datei.')}};r.readAsText(f);e.target.value=''});
 
+// GITHUB LIVE SYNC
+var GH_TOKEN='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';
+var GH_REPO='PJOrab/Japan-2026';
+var GH_FILE='data.json';
+var ghSha=null;
+var syncStat=document.getElementById('syncStatus');
+
+async function syncPull(){
+  syncStat.textContent='\u231b Lade...';
+  try{
+    var resp=await fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+GH_FILE,{
+      headers:{'Authorization':'token '+GH_TOKEN,'Accept':'application/vnd.github.v3+json'}
+    });
+    if(!resp.ok)throw new Error('HTTP '+resp.status);
+    var meta=await resp.json();
+    ghSha=meta.sha;
+    var content=atob(meta.content.replace(/\n/g,''));
+    var data=JSON.parse(content);
+    if(data.days&&data.days.length>0){
+      state=data;activeDay=0;saveState();render();
+      syncStat.textContent='\u2713 Geladen';
+      setTimeout(function(){syncStat.textContent=''},3000);
+    }
+  }catch(e){
+    syncStat.textContent='\u2717 Fehler';
+    console.error('Pull failed:',e);
+    setTimeout(function(){syncStat.textContent=''},3000);
+  }
+}
+
+async function syncPush(){
+  syncStat.textContent='\u231b Speichere...';
+  try{
+    // Get current SHA first
+    var metaResp=await fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+GH_FILE,{
+      headers:{'Authorization':'token '+GH_TOKEN,'Accept':'application/vnd.github.v3+json'}
+    });
+    if(metaResp.ok){var m=await metaResp.json();ghSha=m.sha}
+
+    var content=btoa(unescape(encodeURIComponent(JSON.stringify(state,null,2))));
+    var body={message:'sync: update trip data',content:content};
+    if(ghSha)body.sha=ghSha;
+
+    var resp=await fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+GH_FILE,{
+      method:'PUT',
+      headers:{'Authorization':'token '+GH_TOKEN,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},
+      body:JSON.stringify(body)
+    });
+    if(!resp.ok){var err=await resp.json();throw new Error(err.message||'HTTP '+resp.status)}
+    var result=await resp.json();
+    ghSha=result.content.sha;
+    syncStat.textContent='\u2713 Gespeichert';
+    showToast('\u2713 Sync: Daten f\u00fcr alle gespeichert');
+    setTimeout(function(){syncStat.textContent=''},3000);
+  }catch(e){
+    syncStat.textContent='\u2717 Fehler: '+e.message;
+    console.error('Push failed:',e);
+    setTimeout(function(){syncStat.textContent=''},5000);
+  }
+}
+
+document.getElementById('syncPushBtn').addEventListener('click',syncPush);
+document.getElementById('syncPullBtn').addEventListener('click',syncPull);
+
 // KEYBOARD
 document.addEventListener('keydown',function(e){if(e.key==='Escape')hideModal();if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;if(e.key==='ArrowLeft'&&activeDay>0)selectDay(activeDay-1);if(e.key==='ArrowRight'&&activeDay<state.days.length-1)selectDay(activeDay+1)});
 
-// INIT
+// INIT — pull from GitHub on load, fallback to localStorage/default
 initMap();render();
+syncPull();
 </script>
 </body>
 </html>
