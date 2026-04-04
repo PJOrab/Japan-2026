@@ -403,24 +403,27 @@ document.getElementById('exportBtn').addEventListener('click',function(){var b=n
 document.getElementById('importBtn').addEventListener('click',function(){document.getElementById('importFile').click()});
 document.getElementById('importFile').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){try{var d=JSON.parse(ev.target.result);if(d.days){state=d;activeDay=0;saveState();render();showToast('Importiert!')}}catch(err){alert('Ung\u00fcltige Datei.')}};r.readAsText(f);e.target.value=''});
 
-// GITHUB LIVE SYNC
-var GH_TOKEN='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';
+// GITHUB LIVE SYNC — Token stored in localStorage, never in code
+var GH_TOKEN=localStorage.getItem('gh_token')||'';
 var GH_REPO='PJOrab/Japan-2026';
 var GH_FILE='data.json';
 var ghSha=null;
 var syncStat=document.getElementById('syncStatus');
 
+function ensureToken(){
+  if(GH_TOKEN)return true;
+  var t=prompt('GitHub Token eingeben (einmalig):');
+  if(t&&t.trim()){GH_TOKEN=t.trim();localStorage.setItem('gh_token',GH_TOKEN);return true}
+  return false;
+}
+
 async function syncPull(){
   syncStat.textContent='\u231b Lade...';
   try{
-    var resp=await fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+GH_FILE,{
-      headers:{'Authorization':'token '+GH_TOKEN,'Accept':'application/vnd.github.v3+json'}
-    });
+    // Try public raw fetch first (no token needed for reading)
+    var resp=await fetch('https://raw.githubusercontent.com/'+GH_REPO+'/main/'+GH_FILE+'?t='+Date.now());
     if(!resp.ok)throw new Error('HTTP '+resp.status);
-    var meta=await resp.json();
-    ghSha=meta.sha;
-    var content=atob(meta.content.replace(/\n/g,''));
-    var data=JSON.parse(content);
+    var data=await resp.json();
     if(data.days&&data.days.length>0){
       state=data;activeDay=0;saveState();render();
       syncStat.textContent='\u2713 Geladen';
@@ -434,6 +437,7 @@ async function syncPull(){
 }
 
 async function syncPush(){
+  if(!ensureToken())return;
   syncStat.textContent='\u231b Speichere...';
   try{
     // Get current SHA first
@@ -441,6 +445,7 @@ async function syncPush(){
       headers:{'Authorization':'token '+GH_TOKEN,'Accept':'application/vnd.github.v3+json'}
     });
     if(metaResp.ok){var m=await metaResp.json();ghSha=m.sha}
+    else if(metaResp.status===401){localStorage.removeItem('gh_token');GH_TOKEN='';syncStat.textContent='\u2717 Token ung\u00fcltig';return}
 
     var content=btoa(unescape(encodeURIComponent(JSON.stringify(state,null,2))));
     var body={message:'sync: update trip data',content:content};
