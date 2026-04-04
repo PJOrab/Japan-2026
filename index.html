@@ -404,7 +404,7 @@ document.getElementById('importBtn').addEventListener('click',function(){documen
 document.getElementById('importFile').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){try{var d=JSON.parse(ev.target.result);if(d.days){state=d;activeDay=0;saveState();render();showToast('Importiert!')}}catch(err){alert('Ung\u00fcltige Datei.')}};r.readAsText(f);e.target.value=''});
 
 // GITHUB LIVE SYNC
-var GH_TOKEN='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';
+var GH_TOKEN='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';
 var GH_REPO='PJOrab/Japan-2026';
 var GH_FILE='data.json';
 var ghSha=null;
